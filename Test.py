@@ -37,7 +37,7 @@ Sprite_Height = 32
 Block_Width = 40
 Block_Height = 40
 NUM_ROWS = 4
-NUM_COLUMNS = 14
+NUM_COLUMNS = 15
 GRAVITY = 0.5
 
 
@@ -53,9 +53,7 @@ Sprite_Sheet_Img = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
 
 
 
-class Level(pygame.sprite.Sprite):
-    pass
-
+# TODO: Wrap this in a class and some functions that update and draw the map using tile list to Game_Map 
 Sprite_List = []
 
 for Row in range(NUM_ROWS):
@@ -66,22 +64,24 @@ for Row in range(NUM_ROWS):
         Sprite_Surface.blit(Sprite_Sheet_Img, (0, 0), (x , y, Sprite_Width, Sprite_Height))
         Sprite_Rect = pygame.Rect(x, y, Sprite_Width, Sprite_Height)
         
-        #WINDOW.blit(Sprite_Sheet_Img, (X * 32, Y * 32), (X * 32, Y * 32, 32 , 32))
+        #Set the color white to be transparent
+        Sprite_Surface.set_colorkey((255, 255, 255))
+
+        #Add each Smaller surface from the 
         Sprite_List.append((Sprite_Surface, Sprite_Rect))
 
 
 while RUN:
     pygame.display.update()
-    WINDOW.blit(BG_IMG, (0,0)) 
+    WINDOW.blit(BG_IMG, (0,0))
     
     for event in pygame.event.get():
        pygame.event.get()
        if event.type == pygame.QUIT:
            RUN = False
 
-
-    
-    WINDOW.blit(Sprite_List[21][0], (0, 0))
-        #WINDOW.blit(Sprite_Sheet_Img, (0,0), (0,40, 32, 32))
+    for i, j in Sprite_List:
+        
+        WINDOW.blit(i, j)
 
     
