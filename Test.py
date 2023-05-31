@@ -1,87 +1,102 @@
-import pygame, sys, csv
+import pygame, sys
 
-if sys.version_info < (3,5):
-    print("This game requires at leasst version 3.5 of Python. Please download it from ww.python.org")
-    sys.exit()
-
-#Map
-Game_Map_1 = [[0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+#Map List - (TODO: Improve this from another file so code base is less chunky or used CSV
+Game_Map_1 = [[0,0,0,20,21,23,24,25,22,47,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+              [1,2,5,5,34,1,2,15,6,3,3,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,2],
+             [11,10,5,5,34,11,10,15,15,15,3,13,13,13,13,11,3,3,3,3,3,3,3,3,3,3,3,3,10],
+              [5,5,5,5,31,5,5,5,5,5,5,5,5,5,26,5,5,5,5,27,5,5,5,5,5,5,5,5,5],
+              [5,5,5,5,33,32,32,32,35,35,35,32,33,37,27,37,37,37,37,36,0,0,0,0,0,0,0,0,0],
+              [1,4,4,4,2,6,44,44,46,47,47,47,47,47,47,47,47,47,47,47,47,47,48,51,51,53,53,1,2],
+             [12,5,5,5,12,44,44,6,44,44,44,44,6,44,44,44,44,44,44,44,44,44,22,0,0,0,0,0,0],
+             [12,5,5,5,12,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,22,0,0,0,0,0,0,5,5],
+             [12,5,5,5,12,44,7,7,6,44,44,44,44,44,44,44,44,44,44,44,16,16,16,16,16,16,16,5,5]]
 
-#Initialize Pygame
-pygame.init()
-
-#Game Settings
-RUN = True
-Clock = pygame.time.Clock()
-
-#Define Constants
-WINDOW_WIDTH = 1500
-WINDOW_HEIGHT = 750
-TITLE = "Platformer"
-Sprite_Width = 32
-Sprite_Height = 32
-Block_Width = 40
-Block_Height = 40
-NUM_ROWS = 4
-NUM_COLUMNS = 15
-GRAVITY = 0.5
-
-
-
-#Window Creation
-WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption(TITLE)
-
-#Game Assets
-BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (WINDOW_WIDTH, WINDOW_HEIGHT)) 
-Sprite_Sheet_Img = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
-
-
-
-
-# TODO: Wrap this in a class and some functions that update and draw the map using tile list to Game_Map 
-Sprite_List = []
-
-for Row in range(NUM_ROWS):
-    for Col in range(NUM_COLUMNS):
-        x = Col * Block_Width
-        y = Row * Block_Height
-        Sprite_Surface = pygame.Surface((Sprite_Width, Sprite_Height))
-        Sprite_Surface.blit(Sprite_Sheet_Img, (0, 0), (x , y, Sprite_Width, Sprite_Height))
-        Sprite_Rect = pygame.Rect(x, y, Sprite_Width, Sprite_Height)
+class Platformer:
+    def __init__(self):
         
-        #Set the color white to be transparent
-        Sprite_Surface.set_colorkey((255, 255, 255))
+        #Check my python version| (TODO:
+        if sys.version_info < (3, 5):
+            printf("This game requires at least version 3.5 of Python!")
 
-        #Add each Smaller surface from the 
-        Sprite_List.append((Sprite_Surface, Sprite_Rect))
+        # Init Pygame
+        pygame.init()
+
+        # Game States/Settings
+        self.RUN = True
+        self.Clock = pygame.time.Clock()
+
+        #Define my platformer constanst
+        #(TODO: Maybe get window client dimensions and then aspect it down)
+        self.WINDOW_WIDTH = 1500
+        self.WINDOW_HEIGHT = 750
+        self.TITLE = "Platformer"
+
+        # Block is the allocated spaces for each sprite in my spriteSheet
+        self.SPRITE_WIDTH = 32
+        self.SPRITE_HEIGHT = 32
+        self.BLOCK_WIDTH = 40
+        self.BLOCK_HEIGHT = 40
+        self.NUM_ROWS = 4
+        self.NUM_COLOUMS = 15
+
+        #Window Creation
+        self.WINDOW = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        pygame.display.set_caption(self.TITLE)
+
+        #Game Assets
+        self.BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)) 
+        self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
+        self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
 
 
-while RUN:
-    pygame.display.update()
-    WINDOW.blit(BG_IMG, (0,0))
+    def CREATE_SPRITE_LIST(self):
+        LIST = []
+        for ROW in range(self.NUM_ROWS):
+            for CELL in range(self.NUM_COLOUMS):
+                X = CELL * self.BLOCK_WIDTH
+                Y = ROW * self.BLOCK_HEIGHT
+                
+                SPRITE_SURFACE = pygame.Surface((self.SPRITE_WIDTH, self.SPRITE_HEIGHT))
+                SPRITE_SURFACE.blit(self.SPRITE_SHEET_IMG, (0, 0), (X , Y, self.SPRITE_WIDTH, self.SPRITE_HEIGHT))
+                SPRITE_RECT = pygame.Rect(X, Y, self.SPRITE_WIDTH, self.SPRITE_HEIGHT)
+
+                 #Set sprite image color key transparent. (TODO: Find a better way to do this)
+                SPRITE_SURFACE.set_colorkey((255, 255, 255))
+                # Add all my small sprints into my sprite list - With their RECTS
+                LIST.append((SPRITE_SURFACE, SPRITE_RECT))
     
-    for event in pygame.event.get():
-       pygame.event.get()
-       if event.type == pygame.QUIT:
-           RUN = False
-
-    for i, j in Sprite_List:
+        return LIST
         
-        WINDOW.blit(i, j)
-
     
+    def update(self):
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.RUN = False
+
+    def draw(self):
+        self.WINDOW.blit(self.BG_IMG, (0,0))
+
+        for row in range(len(Game_Map_1)):
+            for col in range(len(Game_Map_1[row])):
+                SPRITE_IDX = Game_Map_1[row][col]
+                if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
+                    SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
+                    self.WINDOW.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width, row * SPRITE_RECT.height))
+        
+
+     
+    
+P1 = Platformer()
+while P1.RUN:
+    P1.update()
+    P1.draw()
+
+
