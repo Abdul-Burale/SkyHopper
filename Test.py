@@ -29,7 +29,7 @@ class Platformer:
         self.BLOCK_HEIGHT = 40
         self.NUM_ROWS = 4
         self.NUM_COLOUMS = 15
-        self.GAME_MAP = self.LOAD_MAP('Map')
+        self.GAME_MAP = self.LOAD_MAP('Asset/TestMap')
 
         #Window Creation
     
@@ -41,12 +41,14 @@ class Platformer:
         self.BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)) 
         self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
         self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
+        self.SCROLL = [0 , 0]
 
     def LOAD_MAP(self, path):
         f = open(path + '.txt', 'r')
         data = f.read()
         f.close()
 
+        #\n => delimiter
         data = data.split('\n')
         Game_Map = []
         for row in data:
@@ -87,13 +89,14 @@ class Platformer:
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
                 SPRITE_IDX = self.GAME_MAP[row][col]
-                if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
+                if SPRITE_IDX == 6:
+             #    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
                     self.DISPLAY.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width, row * SPRITE_RECT.height))
         
-        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)), (0, 0))
+        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)), (0 , 0))
 
-     
+        self.SCROLL[0] += 0.15
     
 P1 = Platformer()
 while P1.RUN:
