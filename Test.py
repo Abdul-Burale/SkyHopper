@@ -1,21 +1,6 @@
 import pygame, sys
 
 #Map List - (TODO: Improve this from another file so code base is less chunky or used CSV
-Game_Map_1 = [[0,0,0,20,21,23,24,25,22,47,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [1,2,5,5,34,1,2,15,6,3,3,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,2],
-             [11,10,5,5,34,11,10,15,15,15,3,13,13,13,13,11,3,3,3,3,3,3,3,3,3,3,3,3,10],
-              [5,5,5,5,31,5,5,5,5,5,5,5,5,5,26,5,5,5,5,27,5,5,5,5,5,5,5,5,5],
-              [5,5,5,5,33,32,32,32,35,35,35,32,33,37,27,37,37,37,37,36,0,0,0,0,0,0,0,0,0],
-              [1,4,4,4,2,6,44,44,46,47,47,47,47,47,47,47,47,47,47,47,47,47,48,51,51,53,53,1,2],
-             [12,5,5,5,12,44,44,6,44,44,44,44,6,44,44,44,44,44,44,44,44,44,22,0,0,0,0,0,0],
-             [12,5,5,5,12,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,22,0,0,0,0,0,0,5,5],
-             [12,5,5,5,12,44,7,7,6,44,44,44,44,44,44,44,44,44,44,44,16,16,16,16,16,16,16,5,5]]
 
 class Platformer:
     def __init__(self):
@@ -44,9 +29,12 @@ class Platformer:
         self.BLOCK_HEIGHT = 40
         self.NUM_ROWS = 4
         self.NUM_COLOUMS = 15
+        self.GAME_MAP = self.LOAD_MAP('Map')
 
         #Window Creation
+    
         self.WINDOW = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        self.DISPLAY = pygame.Surface((self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2))
         pygame.display.set_caption(self.TITLE)
 
         #Game Assets
@@ -54,9 +42,21 @@ class Platformer:
         self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
         self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
 
+    def LOAD_MAP(self, path):
+        f = open(path + '.txt', 'r')
+        data = f.read()
+        f.close()
+
+        data = data.split('\n')
+        Game_Map = []
+        for row in data:
+            Converted_Row = [int(char) for char in row]
+            Game_Map.append(Converted_Row)
+        return Game_Map
 
     def CREATE_SPRITE_LIST(self):
         LIST = []
+
         for ROW in range(self.NUM_ROWS):
             for CELL in range(self.NUM_COLOUMS):
                 X = CELL * self.BLOCK_WIDTH
@@ -82,15 +82,16 @@ class Platformer:
                 self.RUN = False
 
     def draw(self):
-        self.WINDOW.blit(self.BG_IMG, (0,0))
+        self.DISPLAY.blit(self.BG_IMG, (0, 0))
 
-        for row in range(len(Game_Map_1)):
-            for col in range(len(Game_Map_1[row])):
-                SPRITE_IDX = Game_Map_1[row][col]
+        for row in range(len(self.GAME_MAP)):
+            for col in range(len(self.GAME_MAP[row])):
+                SPRITE_IDX = self.GAME_MAP[row][col]
                 if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                    self.WINDOW.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width, row * SPRITE_RECT.height))
+                    self.DISPLAY.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width, row * SPRITE_RECT.height))
         
+        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)), (0, 0))
 
      
     
