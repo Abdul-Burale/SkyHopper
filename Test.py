@@ -114,7 +114,7 @@ class Player:
         self.POS = [self.POS_X, self.POS_Y]
         self.ACTION_LIST = []
         self.ACTION_ANI("Asset/idle/man_{}.png", 4)
-        self.ACTION_ANI("Asset/run/man_{}.png", 6)
+        self.ACTION_ANI("Asset/run/man_{}.png",6)
 
 
         #Deal with player state animations. (TODO: As gamne gets more complicated come back to update thsi()
@@ -133,6 +133,7 @@ class Player:
     def ACTION_ANI(self, PATH, RANGE):
         Temp_List = []
         for i in range(RANGE):
+            print(PATH.format(i))
             Image_Path = PATH.format(i)
             Action_Image = pygame.image.load(Image_Path).convert()
             Action_Image.set_colorkey((255, 255, 255))
@@ -151,18 +152,20 @@ class Player:
             self.ACTION = 1
 
         CURRENT_TIME = pygame.time.get_ticks()
-        if CURRENT_TIME - self.LAST_UPDATE >= 250:
+        if CURRENT_TIME - self.LAST_UPDATE >= 150:
             self.FRAME += 1
             self.LAST_UPDATE = CURRENT_TIME
-            if self.ACTION_LIST[0]:
+            if self.ACTION == 0:
+                self.ACTION_LIST[0]
                 if self.FRAME >= 4:
                     self.FRAME = 0
-
-            elif self.ACTION_LIST[1]:
+            
+            if self.ACTION == 1:
+                self.ACTION_LIST[1]
                 if self.FRAME >= 6:
                     self.FRAME = 0
-
-        
+                    
+            print(self.ACTION, self.FRAME)
 
         self.DISPLAY.blit(self.PLAYER_IMAGE, (self.POS[0], self.POS[1]))
 
