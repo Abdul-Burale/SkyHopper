@@ -3,7 +3,7 @@ import pygame, sys
 #Map List - (TODO: Improve this from another file so code base is less chunky or used CSV
 
 class Platformer:
-    def __init__(self, PLAYER_POS):
+    def __init__(self):
         
         #Check my python version| (TODO:
         if sys.version_info < (3, 5):
@@ -43,8 +43,8 @@ class Platformer:
         self.BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)) 
         self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
         self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
-        self.POS_X = PLAYER_POS
 
+        self.GAME_PADDING = 352
         self.SCROLL = [0 , 0]
 
     def LOAD_MAP(self, path):
@@ -83,20 +83,20 @@ class Platformer:
     #TODO: CLEAN UP SCROLL CODE
     def update(self, player):
         pygame.display.update()
-
         self.Handle_Input()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.RUN = False
         
-        self.SCROLL[0] += (player.POS_X - self.SCROLL[0] - 350)
+
+        self.SCROLL[0] += ((player.POS_X - self.SCROLL[0]) -  self.GAME_PADDING)
         
-    #TODO: Fix this the black edges on the screen
+    #TODO: Fix issue of filling the screen
     def draw(self):
 
         # Updates the background with the SCROLL effect
-        self.DISPLAY.blit(self.BG_IMG, (0 - (self.SCROLL[0] // 3), 0))
+        self.DISPLAY.blit(self.BG_IMG, ( 0 -(self.SCROLL[0] // 3), 0))
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
@@ -104,10 +104,10 @@ class Platformer:
                 if SPRITE_IDX == 6:
              #    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                    self.DISPLAY.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width - self.SCROLL[0], row * SPRITE_RECT.height))
+                    self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width - self.SCROLL[0]) - 120, row * SPRITE_RECT.height))
                 
         Player.Update(P1)
-        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH + 75, self.WINDOW_HEIGHT + 75)), (-150, 0))
+        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0 - 120, 0))
         
     def Handle_Input(self):
        KEY = pygame.key.get_pressed()
@@ -138,7 +138,7 @@ class Player:
         self.VELOCITY_Y = 0
         self.ACCELERATION_X = 0
         self.ACCELERATION_Y = 0
-        self.GRAVITY = 0.5
+        self.GRAVITY = 0
 
         # Direction (TODO: Will have to change this when dealing with velocity direction)
         self.JUMPING = False;
@@ -208,7 +208,7 @@ class Player:
         #TODO: change this later to deal with collisions to gain an extra jump
         if not KEY[pygame.K_SPACE]:
             self.JUMPED = False
-            self.POS_Y += 0.05
+            self.POS_Y += 0.005
 
         if not KEY[pygame.K_a] and not KEY[pygame.K_d]:
             self.ACTION = 0
@@ -239,7 +239,7 @@ class Player:
             
 
 
-P1 = Platformer(0)
+P1 = Platformer()
 Player = Player(P1.DISPLAY)
 while P1.RUN:
     P1.update(Player)
