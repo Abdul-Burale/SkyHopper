@@ -3,11 +3,11 @@ import pygame, sys
 #Map List - (TODO: Improve this from another file so code base is less chunky or used CSV
 
 class Platformer:
-    def __init__(self):
+    def __init__(self, PLAYER_POS):
         
         #Check my python version| (TODO:
         if sys.version_info < (3, 5):
-            printf("This game requires at least version 3.5 of Python!")
+            raise Exception("This game requires at least version 3.5 of Python!")
 
         # Init Pygame
         pygame.init()
@@ -15,6 +15,8 @@ class Platformer:
         # Game States/Settings
         self.RUN = True
         self.Clock = pygame.time.Clock()
+
+        # Player details
 
         #Define my platformer constanst
         #(TODO: Maybe get window client dimensions and then aspect it down)
@@ -41,6 +43,8 @@ class Platformer:
         self.BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)) 
         self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
         self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
+        self.POS_X = PLAYER_POS
+
         self.SCROLL = [0 , 0]
 
     def LOAD_MAP(self, path):
@@ -74,18 +78,25 @@ class Platformer:
                 LIST.append((SPRITE_SURFACE, SPRITE_RECT))
     
         return LIST
-        
     
-    def update(self):
+    
+    #TODO: CLEAN UP SCROLL CODE
+    def update(self, player):
         pygame.display.update()
+
+        self.Handle_Input()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.RUN = False
         
-
+        self.SCROLL[0] += (player.POS_X - self.SCROLL[0] - 350)
+        
+    #TODO: Fix this the black edges on the screen
     def draw(self):
-        self.DISPLAY.blit(self.BG_IMG, (0, 0))
+
+        # Updates the background with the SCROLL effect
+        self.DISPLAY.blit(self.BG_IMG, (0 - (self.SCROLL[0] // 3), 0))
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
@@ -93,12 +104,16 @@ class Platformer:
                 if SPRITE_IDX == 6:
              #    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                    self.DISPLAY.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width, row * SPRITE_RECT.height))
-        Player.update()
+                    self.DISPLAY.blit(SPRITE_SURFACE, (col * SPRITE_RECT.width - self.SCROLL[0], row * SPRITE_RECT.height))
                 
-        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)), (0  , 0))
+        Player.Update(P1)
+        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH + 75, self.WINDOW_HEIGHT + 75)), (-150, 0))
         
-        self.SCROLL[0] -= 0.1
+    def Handle_Input(self):
+       KEY = pygame.key.get_pressed()
+    
+       if KEY[pygame.K_ESCAPE]:
+           self.RUN = False
 
 
 class Player:
@@ -111,7 +126,6 @@ class Player:
         self.FRAME = 0
         self.PLAYER_WIDTH = 50
         self.PLAYER_HEIGHT = 50
-        self.POS = [self.POS_X, self.POS_Y]
         self.ACTION_LIST = []
         self.ACTION_ANI("Asset/idle/man_{}.png", 4)
         self.ACTION_ANI("Asset/run/man_{}.png",6)
@@ -125,55 +139,111 @@ class Player:
         self.ACCELERATION_X = 0
         self.ACCELERATION_Y = 0
         self.GRAVITY = 0.5
+
+        # Direction (TODO: Will have to change this when dealing with velocity direction)
         self.JUMPING = False;
         self.FALLING = False;
+        self.MOVING_RIGHT = False
+        self.MOVING_LEFT = False
+        self.FLIPPED = False
+
+        # Player time  (TODO): Wrapping this globally might be bad so sort time in Platform class later
         self.LAST_UPDATE = pygame.time.get_ticks()
-        #init animations
 
     def ACTION_ANI(self, PATH, RANGE):
         Temp_List = []
         for i in range(RANGE):
-            print(PATH.format(i))
             Image_Path = PATH.format(i)
             Action_Image = pygame.image.load(Image_Path).convert()
             Action_Image.set_colorkey((255, 255, 255))
             Temp_List.append(Action_Image)
         self.ACTION_LIST.append(Temp_List)
     
-    def update(self):
-        global LAST_UPDATE
-        self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
+    def Update(self, platformer):
         
-        KEY = pygame.key.get_pressed()
-        if KEY[pygame.K_1]:
-            self.ACTION = 0
+        #TODO: TIDY UP
+        self.PLATFORMER = platformer
+        self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]        
 
-        if KEY[pygame.K_2]:
-            self.ACTION = 1
-
+        # Calculate time in miliseconds
         CURRENT_TIME = pygame.time.get_ticks()
-        if CURRENT_TIME - self.LAST_UPDATE >= 150:
+        TIME_ELAPSED = CURRENT_TIME - self.LAST_UPDATE
+
+        if TIME_ELAPSED >= 150:
             self.FRAME += 1
             self.LAST_UPDATE = CURRENT_TIME
             if self.ACTION == 0:
-                self.ACTION_LIST[0]
                 if self.FRAME >= 4:
                     self.FRAME = 0
             
             if self.ACTION == 1:
-                self.ACTION_LIST[1]
                 if self.FRAME >= 6:
                     self.FRAME = 0
-                    
-            print(self.ACTION, self.FRAME)
 
-        self.DISPLAY.blit(self.PLAYER_IMAGE, (self.POS[0], self.POS[1]))
+        self.Update_Player()
+        self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y))
 
-P1 = Platformer()
+    def Update_Player(self):
+
+        self.Handle_Input()
+        self.Handle_Movement()
+        
+
+    def Handle_Input(self):
+        KEY = pygame.key.get_pressed()
+
+        if KEY[pygame.K_a]:
+            self.MOVING_LEFT = True
+        else:
+            self.MOVING_LEFT = False
+        
+        if KEY[pygame.K_d]:
+            self.MOVING_RIGHT = True
+        else:
+            self.MOVING_RIGHT = False
+        
+        if KEY[pygame.K_SPACE]:
+            self.JUMPED = True
+
+        #TODO: change this later to deal with collisions to gain an extra jump
+        if not KEY[pygame.K_SPACE]:
+            self.JUMPED = False
+            self.POS_Y += 0.05
+
+        if not KEY[pygame.K_a] and not KEY[pygame.K_d]:
+            self.ACTION = 0
+            if self.ACTION == 0:
+                if self.FRAME >= 4:
+                    self.FRAME = 0
+            else:
+                self.FRAME += 1
+
+    def Handle_Movement(self):
+
+        if self.MOVING_LEFT == True and self.POS_X > -5:
+            self.ACTION = 1
+            self.FLIPPED = True
+            self.POS_X -= 0.2
+
+        if self.MOVING_RIGHT == True and self.POS_X < 1500 :
+            self.ACTION = 1
+            self.POS_X += 0.2
+            self.FLIPPED = False
+
+        if self.JUMPED == True:
+            self.POS_Y -= 0.25
+        
+        if self.JUMPED == False:
+            pass
+            #self.POS[1] -= self.GRAVITY
+            
+
+
+P1 = Platformer(0)
 Player = Player(P1.DISPLAY)
 while P1.RUN:
-    P1.update()
+    P1.update(Player)
     P1.draw()
-    Player.update()
+    Player.Update(P1)
 
 
