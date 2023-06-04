@@ -92,22 +92,30 @@ class Platformer:
 
         self.SCROLL[0] += ((player.POS_X - self.SCROLL[0]) -  self.GAME_PADDING)
         
-    #TODO: Fix issue of filling the screen
+    #TODO: Only Issue Left here is Drawing the Black Ground
+    #TODO: And Camera is NOT LOCKED ONTO player 
+    #    (self.SCROLL[0] // 3)
     def draw(self):
 
-        # Updates the background with the SCROLL effect
-        self.DISPLAY.blit(self.BG_IMG, ( 0 -(self.SCROLL[0] // 3), 0))
+        self.DISPLAY.blit(self.BG_IMG, ( 0  , 0))
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
                 SPRITE_IDX = self.GAME_MAP[row][col]
                 if SPRITE_IDX == 6:
-             #    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
+                 if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                    self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width - self.SCROLL[0]) - 120, row * SPRITE_RECT.height))
-                
+                    if Player.POS_X < 200:
+                        self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width) , row * SPRITE_RECT.height))
+                    
+                    else:
+                        self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width ) - (150 + self.SCROLL[0]) , row * SPRITE_RECT.height))
+
+
+        print(Player.POS_X, self.SCROLL[0])
         Player.Update(P1)
-        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0 - 120, 0))
+        #
+        self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
         
     def Handle_Input(self):
        KEY = pygame.key.get_pressed()
@@ -181,7 +189,8 @@ class Player:
                     self.FRAME = 0
 
         self.Update_Player()
-        self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y))
+        #- self.PLATFORMER.SCROLL[0]
+        self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X, self.POS_Y))
 
     def Update_Player(self):
 
