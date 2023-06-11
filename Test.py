@@ -90,29 +90,36 @@ class Platformer:
                 self.RUN = False
         
 
-        self.SCROLL[0] += ((player.POS_X - self.SCROLL[0]) -  self.GAME_PADDING)
+        self.SCROLL[0] += (player.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
         
     #TODO: Only Issue Left here is Drawing the Black Ground
     #TODO: And Camera is NOT LOCKED ONTO player 
     #    (self.SCROLL[0] // 3)
     def draw(self):
 
-        self.DISPLAY.blit(self.BG_IMG, ( 0  , 0))
+        if Player.POS_X < 350:
+            self.DISPLAY.blit(self.BG_IMG, ( 0, 0))
+        else:
+            self.DISPLAY.blit(self.BG_IMG, (-self.SCROLL[0], 0))
+
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
                 SPRITE_IDX = self.GAME_MAP[row][col]
                 if SPRITE_IDX == 6:
-                 if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
-                    SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                    if Player.POS_X < 200:
-                        self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width) , row * SPRITE_RECT.height))
+                 
+                    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
+                        SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
+                        if Player.POS_X < 350:
+                        # Camera stops moving as player is near the Wall
+                            self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width) , row * SPRITE_RECT.height))
                     
-                    else:
-                        self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width ) - (150 + self.SCROLL[0]) , row * SPRITE_RECT.height))
+                        else:
+                        #TODO: Another if Block if help camera stay locked onto the Player
+                            self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width ) - self.SCROLL[0] , row * SPRITE_RECT.height))
 
 
-        print(Player.POS_X, self.SCROLL[0])
+      
         Player.Update(P1)
         #
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
@@ -128,8 +135,8 @@ class Player:
     def __init__(self, display):
         #Player
         self.DISPLAY = display
-        self.POS_X = 0
-        self.POS_Y = 0
+        self.POS_X = 60
+        self.POS_Y = 280
         self.ACTION = 0
         self.FRAME = 0
         self.PLAYER_WIDTH = 50
@@ -190,7 +197,13 @@ class Player:
 
         self.Update_Player()
         #- self.PLATFORMER.SCROLL[0]
-        self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X, self.POS_Y))
+        if self.POS_X < 350:
+            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X , self.POS_Y))
+        else:
+            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y))
+
+        print(self.PLATFORMER.SCROLL[0])
+
 
     def Update_Player(self):
 
@@ -255,4 +268,6 @@ while P1.RUN:
     P1.draw()
     Player.Update(P1)
 
+   # print(Player.POS_X, P1.SCROLL[0])
+    
 
