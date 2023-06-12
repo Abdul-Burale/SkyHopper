@@ -1,11 +1,9 @@
 import pygame, sys
 
-#Map List - (TODO: Improve this from another file so code base is less chunky or used CSV
 
 class Platformer:
     def __init__(self):
         
-        #Check my python version| (TODO:
         if sys.version_info < (3, 5):
             raise Exception("This game requires at least version 3.5 of Python!")
 
@@ -17,6 +15,7 @@ class Platformer:
         self.Clock = pygame.time.Clock()
 
         # Player details
+        self.PLAYER = None
 
         #Define my platformer constanst
         #(TODO: Maybe get window client dimensions and then aspect it down)
@@ -79,11 +78,12 @@ class Platformer:
     
         return LIST
     
-    
-    #TODO: CLEAN UP SCROLL CODE
+    #TODO: Take this player argument and wrap it in a functiont aht sets all arguments passed from other classess.
     def update(self, player):
+        self.PLAYER = player
         pygame.display.update()
         self.Handle_Input()
+        self.Check_Collision()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -91,17 +91,14 @@ class Platformer:
         
 
         self.SCROLL[0] += (player.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
-        
-    #TODO: Only Issue Left here is Drawing the Black Ground
-    #TODO: And Camera is NOT LOCKED ONTO player 
-    #    (self.SCROLL[0] // 3)
+        self.draw()
+    
     def draw(self):
 
         if Player.POS_X < 350:
             self.DISPLAY.blit(self.BG_IMG, ( 0, 0))
         else:
             self.DISPLAY.blit(self.BG_IMG, (-self.SCROLL[0], 0))
-
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
@@ -110,20 +107,31 @@ class Platformer:
                  
                     if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
                         SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
+                        SPRITE_RECT.x = (col * SPRITE_RECT.width)
+                        SPRITE_RECT.y = (row * SPRITE_RECT.height)
+                        
+                        
                         if Player.POS_X < 350:
                         # Camera stops moving as player is near the Wall
-                            self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width) , row * SPRITE_RECT.height))
-                    
+                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT))
+                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
                         else:
-                        #TODO: Another if Block if help camera stay locked onto the Player
-                            self.DISPLAY.blit(SPRITE_SURFACE, ((col * SPRITE_RECT.width ) - self.SCROLL[0] , row * SPRITE_RECT.height))
+                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , SPRITE_RECT.y))
+                            #pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y, 50 / 1.5, 50 / 1.5), width=1)
 
 
-      
+        
         Player.Update(P1)
+
+        if self.PLAYER.PLAYER_RECT.x < 350:
+            pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.PLAYER.PLAYER_RECT, width=1)
+        else:
+            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (self.PLAYER.PLAYER_RECT.x - self.SCROLL[0], self.PLAYER.PLAYER_RECT.y, self.PLAYER.PLAYER_RECT.width, self.PLAYER.PLAYER_RECT.height), width=1)
+
         #
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
-        
+    
+
     def Handle_Input(self):
        KEY = pygame.key.get_pressed()
     
@@ -131,11 +139,27 @@ class Platformer:
            self.RUN = False
 
 
+
+    def Check_Collision(self):
+        player_rect = self.PLAYER.PLAYER_RECT
+    
+        for row in range(len(self.GAME_MAP)):
+            for col in range(len(self.GAME_MAP[row])):
+                sprite_idx = self.GAME_MAP[row][col]
+                if sprite_idx == 6:
+                    sprite_rect = pygame.Rect(col * self.SPRITE_WIDTH, row * self.SPRITE_HEIGHT, self.SPRITE_WIDTH, self.SPRITE_HEIGHT)
+                    if player_rect.colliderect(sprite_rect):
+                        # Perform collision handling actions
+                        # For example, you can update the player's position or trigger an event
+                        self.PLAYER.Update_Player_Pos()
+                        print("Collision")
+                        return
+        
 class Player:
     def __init__(self, display):
         #Player
         self.DISPLAY = display
-        self.POS_X = 60
+        self.POS_X = 80
         self.POS_Y = 280
         self.ACTION = 0
         self.FRAME = 0
@@ -148,11 +172,10 @@ class Player:
 
         #Deal with player state animations. (TODO: As gamne gets more complicated come back to update thsi()
         self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
+        self.PLAYER_RECT = pygame.Rect(self.POS_X, self.POS_Y, self.PLAYER_WIDTH // 1.5, self.PLAYER_HEIGHT // 1.5)
         
-        self.VELOCITY_X = 0
-        self.VELOCITY_Y = 0
-        self.ACCELERATION_X = 0
-        self.ACCELERATION_Y = 0
+        self.DELTA_X = 0
+        self.DELTA_Y = 0
         self.GRAVITY = 0
 
         # Direction (TODO: Will have to change this when dealing with velocity direction)
@@ -178,7 +201,8 @@ class Player:
         
         #TODO: TIDY UP
         self.PLATFORMER = platformer
-        self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]        
+        self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]  
+
 
         # Calculate time in miliseconds
         CURRENT_TIME = pygame.time.get_ticks()
@@ -201,14 +225,20 @@ class Player:
             self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X , self.POS_Y))
         else:
             self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y))
+        
 
-        print(self.PLATFORMER.SCROLL[0])
 
 
     def Update_Player(self):
 
         self.Handle_Input()
         self.Handle_Movement()
+
+        #Update Delta
+
+        # Update Player Rect Coo-ords
+        self.PLAYER_RECT.x = self.POS_X
+        self.PLAYER_RECT.y = self.POS_Y
         
 
     def Handle_Input(self):
@@ -242,14 +272,15 @@ class Player:
 
     def Handle_Movement(self):
 
+        # Need to change movement into Delta X & Y for collision checking
         if self.MOVING_LEFT == True and self.POS_X > -5:
             self.ACTION = 1
             self.FLIPPED = True
-            self.POS_X -= 0.2
+            self.DELTA_X -= 0.2
 
         if self.MOVING_RIGHT == True and self.POS_X < 1500 :
             self.ACTION = 1
-            self.POS_X += 0.2
+            self.DELTA_X += 0.2
             self.FLIPPED = False
 
         if self.JUMPED == True:
@@ -259,15 +290,23 @@ class Player:
             pass
             #self.POS[1] -= self.GRAVITY
             
+        self.POS_X += self.DELTA_X
+        self.POS_Y += self.DELTA_Y
 
+        # Reset Delta values
+        self.DELTA_X = 0
+        self.DELTA_Y = 0
 
+    def Update_Player_Pos(self):
+        self.DELTA_X = 0
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
+
 while P1.RUN:
     P1.update(Player)
     P1.draw()
     Player.Update(P1)
 
-   # print(Player.POS_X, P1.SCROLL[0])
+
     
 
