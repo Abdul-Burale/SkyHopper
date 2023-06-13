@@ -12,7 +12,7 @@ class Platformer:
 
         # Game States/Settings
         self.RUN = True
-        self.Clock = pygame.time.Clock()
+        self.Clock = pygame.time.Clock()                  
 
         # Player details
         self.PLAYER = None
@@ -121,7 +121,7 @@ class Platformer:
 
 
         
-        Player.Update(P1)
+        self.PLAYER.Update(self)
 
         if self.PLAYER.PLAYER_RECT.x < 350:
             pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.PLAYER.PLAYER_RECT, width=1)
@@ -159,7 +159,8 @@ class Player:
         
         self.DELTA_X = 0
         self.DELTA_Y = 0
-        self.GRAVITY = 0
+        self.VEL_Y = 0
+        self.GRAVITY = 0.005
 
         # Direction (TODO: Will have to change this when dealing with velocity direction)
         self.JUMPING = False;
@@ -237,13 +238,15 @@ class Player:
         else:
             self.MOVING_RIGHT = False
         
-        if KEY[pygame.K_SPACE]:
+        if KEY[pygame.K_SPACE] and self.JUMPED == False:
             self.JUMPED = True
+            self.FALLING = False
 
         #TODO: change this later to deal with collisions to gain an extra jump
         if not KEY[pygame.K_SPACE]:
             self.JUMPED = False
-            self.POS_Y += 0.005
+            self.FALLING = True
+            
 
         if not KEY[pygame.K_a] and not KEY[pygame.K_d]:
             self.ACTION = 0
@@ -272,33 +275,56 @@ class Player:
             self.FLIPPED = False
 
         if self.JUMPED == True:
-            self.POS_Y -= 0.25
-        
+            self.VEL_Y = -1
+
         if self.JUMPED == False:
-            pass
-            #self.POS[1] -= self.GRAVITY
+           pass
+
+        #Apply Gravity
+        if self.FALLING == True:
+            self.VEL_Y += self.GRAVITY
+            if self.VEL_Y >= 0.5:
+                self.VEL_Y = 0.45
+
+        self.DELTA_Y += self.VEL_Y
+
         
         self.Check_Tile_Collision(self.PLATFORMER.GAME_MAP)
 
-            
+
         self.POS_X += self.DELTA_X
-        self.POS_Y += self.DELTA_Y
+        self.POS_Y += self.DELTA_Y 
+        print(self.DELTA_Y)
 
-
-    #TODO: Wrap this in a function that doesn't use a nested loop
+    #TODO: Wrap this in a function that doesn't use a nested loop -- A little inefficient
     def Check_Tile_Collision(self, Data):
-    
+        
         for ROW in range(len(Data)):
             for CELL in range(len(Data[ROW])):
                 SPRITE_IDX = Data[ROW][CELL]
                 if SPRITE_IDX == 6:
-                    SPRITE_RECT = pygame.Rect(CELL * P1.SPRITE_WIDTH, ROW * P1.SPRITE_HEIGHT, P1.SPRITE_WIDTH, P1.SPRITE_HEIGHT)
+                    SPRITE_RECT = pygame.Rect(CELL * self.PLATFORMER.SPRITE_WIDTH, ROW * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
                     #pygame.draw.rect(P1.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
                     
-                    #TODO: Collision checking for X angle first
-                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X , self.PLAYER_RECT.y, self.PLAYER_WIDTH / 2, self.PLAYER_HEIGHT / 2) :
+                    
+                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X , self.PLAYER_RECT.y, self.PLAYER_WIDTH // 2, self.PLAYER_HEIGHT // 2) :
                         self.DELTA_X = 0
-                        print("!!Collision!! SPRITE_RECT ==> {} || Player Rect X ==> {}".format(SPRITE_RECT, self.PLAYER_RECT.x))
+                        #print("X Axis Collision")
+           
+                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x, self.PLAYER_RECT.y + self.DELTA_Y, 20, self.PLAYER_RECT.height):
+                      #  print("CHECK ==> {} SRPITE_BOTTOM ==> {} PLAYER_RECT_TOP ==> {}".format((SPRITE_RECT.bottom - self.PLAYER_RECT.top), SPRITE_RECT.bottom, self.PLAYER_RECT.top))
+                        
+                        #CEILING
+                        if  self.VEL_Y < 0:
+                            self.DELTA_Y = (SPRITE_RECT.bottom - self.PLAYER_RECT.top)
+                            self.VEL_Y = 0
+                                
+                            #print("CEILING COLLISION -- || -- DELTA_Y ==> {}".format(self.DELTA_Y))
+                        #FLOOR
+                        elif (SPRITE_RECT.top - self.PLAYER_RECT.bottom) == -1:
+                            self.DELTA_Y = 0
+                            self.VEL_Y = 0
+#                            print("DELTA_Y -->{}  CHECK ==> {} SRPITE_BOTTOM ==> {} PLAYER_RECT_TOP ==> {}".format(self.DELTA_Y, (SPRITE_RECT.top - self.PLAYER_RECT.bottom), SPRITE_RECT.top, self.PLAYER_RECT.bottom))
 
 
 P1 = Platformer()
