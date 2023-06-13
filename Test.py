@@ -83,7 +83,7 @@ class Platformer:
         self.PLAYER = player
         pygame.display.update()
         self.Handle_Input()
-        self.Check_Collision()
+        #self.Check_Collision()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -114,7 +114,7 @@ class Platformer:
                         if Player.POS_X < 350:
                         # Camera stops moving as player is near the Wall
                             self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT))
-                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
+                            #pygame.draw.rect(self.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
                         else:
                             self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , SPRITE_RECT.y))
                             #pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y, 50 / 1.5, 50 / 1.5), width=1)
@@ -138,23 +138,6 @@ class Platformer:
        if KEY[pygame.K_ESCAPE]:
            self.RUN = False
 
-
-
-    def Check_Collision(self):
-        player_rect = self.PLAYER.PLAYER_RECT
-    
-        for row in range(len(self.GAME_MAP)):
-            for col in range(len(self.GAME_MAP[row])):
-                sprite_idx = self.GAME_MAP[row][col]
-                if sprite_idx == 6:
-                    sprite_rect = pygame.Rect(col * self.SPRITE_WIDTH, row * self.SPRITE_HEIGHT, self.SPRITE_WIDTH, self.SPRITE_HEIGHT)
-                    if player_rect.colliderect(sprite_rect):
-                        # Perform collision handling actions
-                        # For example, you can update the player's position or trigger an event
-                        self.PLAYER.Update_Player_Pos()
-                        print("Collision")
-                        return
-        
 class Player:
     def __init__(self, display):
         #Player
@@ -172,7 +155,7 @@ class Player:
 
         #Deal with player state animations. (TODO: As gamne gets more complicated come back to update thsi()
         self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
-        self.PLAYER_RECT = pygame.Rect(self.POS_X, self.POS_Y, self.PLAYER_WIDTH // 1.5, self.PLAYER_HEIGHT // 1.5)
+        self.PLAYER_RECT = pygame.Rect(self.POS_X, self.POS_Y, self.PLAYER_WIDTH // 2, self.PLAYER_HEIGHT // 1.5)
         
         self.DELTA_X = 0
         self.DELTA_Y = 0
@@ -271,9 +254,14 @@ class Player:
                 self.FRAME += 1
 
     def Handle_Movement(self):
+        # Reset Delta values
 
+        self.DELTA_X = 0
+        self.DELTA_Y = 0
+
+    
         # Need to change movement into Delta X & Y for collision checking
-        if self.MOVING_LEFT == True and self.POS_X > -5:
+        if self.MOVING_LEFT == True and self.PLAYER_RECT.x >= -5:
             self.ACTION = 1
             self.FLIPPED = True
             self.DELTA_X -= 0.2
@@ -289,16 +277,30 @@ class Player:
         if self.JUMPED == False:
             pass
             #self.POS[1] -= self.GRAVITY
+        
+        self.Check_Tile_Collision(self.PLATFORMER.GAME_MAP)
+
             
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y
 
-        # Reset Delta values
-        self.DELTA_X = 0
-        self.DELTA_Y = 0
 
-    def Update_Player_Pos(self):
-        self.DELTA_X = 0
+    #TODO: Wrap this in a function that doesn't use a nested loop
+    def Check_Tile_Collision(self, Data):
+    
+        for ROW in range(len(Data)):
+            for CELL in range(len(Data[ROW])):
+                SPRITE_IDX = Data[ROW][CELL]
+                if SPRITE_IDX == 6:
+                    SPRITE_RECT = pygame.Rect(CELL * P1.SPRITE_WIDTH, ROW * P1.SPRITE_HEIGHT, P1.SPRITE_WIDTH, P1.SPRITE_HEIGHT)
+                    #pygame.draw.rect(P1.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
+                    
+                    #TODO: Collision checking for X angle first
+                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X , self.PLAYER_RECT.y, self.PLAYER_WIDTH / 2, self.PLAYER_HEIGHT / 2) :
+                        self.DELTA_X = 0
+                        print("!!Collision!! SPRITE_RECT ==> {} || Player Rect X ==> {}".format(SPRITE_RECT, self.PLAYER_RECT.x))
+
+
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
 
