@@ -90,7 +90,11 @@ class Platformer:
                 self.RUN = False
         
 
-        self.SCROLL[0] += (player.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
+        self.SCROLL[0] += (self.PLAYER.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
+        if (self.PLAYER.POS_Y <= 175):
+            self.SCROLL[1] = 0
+        else:
+            self.SCROLL[1] += (self.PLAYER.POS_Y - self.SCROLL[1] - 175)
         self.draw()
     
     def draw(self):
@@ -113,21 +117,21 @@ class Platformer:
                         
                         if Player.POS_X < 350:
                         # Camera stops moving as player is near the Wall
-                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT))
-                            #pygame.draw.rect(self.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
+                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
+                           # pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
                         else:
-                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , SPRITE_RECT.y))
-                            #pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y, 50 / 1.5, 50 / 1.5), width=1)
+                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
+                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
 
 
         
         self.PLAYER.Update(self)
-
+        '''
         if self.PLAYER.PLAYER_RECT.x < 350:
             pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.PLAYER.PLAYER_RECT, width=1)
         else:
             pygame.draw.rect(self.DISPLAY, (255, 255, 255), (self.PLAYER.PLAYER_RECT.x - self.SCROLL[0], self.PLAYER.PLAYER_RECT.y, self.PLAYER.PLAYER_RECT.width, self.PLAYER.PLAYER_RECT.height), width=1)
-
+        '''
         #
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
     
@@ -163,7 +167,7 @@ class Player:
         self.GRAVITY = 0.005
 
         # Direction (TODO: Will have to change this when dealing with velocity direction)
-        self.JUMPING = False;
+        self.JUMPED = False;
         self.FALLING = False;
         self.MOVING_RIGHT = False
         self.MOVING_LEFT = False
@@ -206,9 +210,9 @@ class Player:
         self.Update_Player()
         #- self.PLATFORMER.SCROLL[0]
         if self.POS_X < 350:
-            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X , self.POS_Y))
+            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X , self.POS_Y - self.PLATFORMER.SCROLL[1]))
         else:
-            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y))
+            self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X - self.PLATFORMER.SCROLL[0], self.POS_Y - self.PLATFORMER.SCROLL[1]))
         
 
 
@@ -239,13 +243,17 @@ class Player:
             self.MOVING_RIGHT = False
         
         if KEY[pygame.K_SPACE] and self.JUMPED == False:
+            self.VEL_Y = -0.5
             self.JUMPED = True
             self.FALLING = False
 
         #TODO: change this later to deal with collisions to gain an extra jump
         if not KEY[pygame.K_SPACE]:
-            self.JUMPED = False
             self.FALLING = True
+            if self.VEL_Y == 0:
+                self.JUMPED = False
+        
+        #TODO: MOVE EXCAPE KEY INTO HERE
             
 
         if not KEY[pygame.K_a] and not KEY[pygame.K_d]:
@@ -275,7 +283,7 @@ class Player:
             self.FLIPPED = False
 
         if self.JUMPED == True:
-            self.VEL_Y = -1
+            self.VEL_Y += 0
 
         if self.JUMPED == False:
            pass
@@ -324,6 +332,7 @@ class Player:
                         elif (SPRITE_RECT.top - self.PLAYER_RECT.bottom) == -1:
                             self.DELTA_Y = 0
                             self.VEL_Y = 0
+
 #                            print("DELTA_Y -->{}  CHECK ==> {} SRPITE_BOTTOM ==> {} PLAYER_RECT_TOP ==> {}".format(self.DELTA_Y, (SPRITE_RECT.top - self.PLAYER_RECT.bottom), SPRITE_RECT.top, self.PLAYER_RECT.bottom))
 
 
