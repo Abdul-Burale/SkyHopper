@@ -45,6 +45,7 @@ class Platformer:
 
         self.GAME_PADDING = 352
         self.SCROLL = [0 , 0]
+        self.SHOW = False
 
     def LOAD_MAP(self, path):
         f = open(path + '.txt', 'r')
@@ -118,10 +119,12 @@ class Platformer:
                         if Player.POS_X < 350:
                         # Camera stops moving as player is near the Wall
                             self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
-                           # pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
+                            if self.SHOW == True:
+                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
                         else:
                             self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
-                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
+                            if self.SHOW == True:
+                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
 
 
         
@@ -141,6 +144,16 @@ class Platformer:
     
        if KEY[pygame.K_ESCAPE]:
            self.RUN = False
+
+       if KEY[pygame.K_1]:
+           self.SHOW = True
+        
+       if KEY[pygame.K_2]:
+           self.SHOW = False
+       
+       if KEY[pygame.K_3]:
+           self.PLAYER.POS_X = 80
+           self.PLAYER.POS_Y = 280
 
 class Player:
     def __init__(self, display):
