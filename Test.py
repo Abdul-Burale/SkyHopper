@@ -79,6 +79,9 @@ class Platformer:
     
         return LIST
     
+    def HANDLE_SPRITE_IMAGE(self, S_IDX):
+        pass
+    
     #TODO: Take this player argument and wrap it in a functiont aht sets all arguments passed from other classess.
     def update(self, player):
         self.PLAYER = player
@@ -118,6 +121,8 @@ class Platformer:
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
                 SPRITE_IDX = self.GAME_MAP[row][col]
+                #TODO: Create a function that deals wiuth this
+                
                 if SPRITE_IDX == 6:
                  
                     if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
@@ -136,6 +141,20 @@ class Platformer:
                             if self.SHOW == True:
                                 pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
 
+                if SPRITE_IDX == 1:
+                                    
+                                        SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
+                                        SPRITE_RECT.x = (col * SPRITE_RECT.width)
+                                        SPRITE_RECT.y = (row * SPRITE_RECT.height)
+                                        if Player.POS_X < 350:
+                                        # Camera stops moving as player is near the Wall
+                                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
+                                            if self.SHOW == True:
+                                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
+                                        else:
+                                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
+                                            if self.SHOW == True:
+                                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
 
         
         self.PLAYER.Update(self)
@@ -189,6 +208,7 @@ class Player:
         self.MOVING_RIGHT = False
         self.MOVING_LEFT = False
         self.FLIPPED = False
+        self.Can_Jump = 0
 
         # Player time  (TODO): Wrapping this globally might be bad so sort time in Platform class later
         self.LAST_UPDATE = pygame.time.get_ticks()
@@ -258,11 +278,12 @@ class Player:
             self.MOVING_RIGHT = True
         else:
             self.MOVING_RIGHT = False
-        
-        if KEY[pygame.K_SPACE] and self.JUMPED == False:
-            self.VEL_Y = -0.5
+
+        # Python won't let me handle jump with two different methods
+        if KEY[pygame.K_SPACE] and not self.JUMPED:
+            self.VEL_Y = -0.60
             self.JUMPED = True
-            self.FALLING = False
+            
 
         #TODO: change this later to deal with collisions to gain an extra jump
         if not KEY[pygame.K_SPACE]:
@@ -299,12 +320,6 @@ class Player:
             self.DELTA_X += 0.5
             self.FLIPPED = False
 
-        if self.JUMPED == True:
-            self.VEL_Y += 0
-
-        if self.JUMPED == False:
-           pass
-
         #Apply Gravity
         if self.FALLING == True:
             self.VEL_Y += self.GRAVITY
@@ -319,11 +334,12 @@ class Player:
 
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y 
+        print("VEL_Y ==> {}".format(self.VEL_Y))
         
 
     #TODO: Wrap this in a function that doesn't use a nested loop -- A little inefficient
     def Check_Tile_Collision(self, Data):
-        P_RECT_1 = pygame.Rect((self.PLAYER_RECT.x + self.DELTA_X) - self.PLATFORMER.SCROLL[0], (self.PLAYER_RECT.y + self.DELTA_Y) - self.PLATFORMER.SCROLL[1], self.PLAYER_RECT.width, self.PLAYER_RECT.height)
+        P_RECT_DEBUG = pygame.Rect((self.PLAYER_RECT.x + self.DELTA_X) - self.PLATFORMER.SCROLL[0], (self.PLAYER_RECT.y + self.DELTA_Y) - self.PLATFORMER.SCROLL[1], self.PLAYER_RECT.width, self.PLAYER_RECT.height)
         
         for ROW in range(len(Data)):
             for CELL in range(len(Data[ROW])):
@@ -334,11 +350,18 @@ class Player:
                 x_collision = False
                 y_collision = False
 
+                #X - AXIS COLLISION
                 if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X, self.PLAYER_RECT.y, self.PLAYER_RECT.width, self.PLAYER_RECT.height - 1):
                     x_collision = True
+                    if self.PLATFORMER.SHOW == True:
+                        pygame.draw.rect(self.DISPLAY, (255, 0, 0), P_RECT_DEBUG, width=1)
 
+
+                #Y - AXIS COLLISION
                 if SPRITE_RECT.colliderect(self.PLAYER_RECT.x, self.PLAYER_RECT.y + self.DELTA_Y, self.PLAYER_RECT.width - 2, self.PLAYER_RECT.height):
                     y_collision = True
+                    if self.PLATFORMER.SHOW == True:
+                        pygame.draw.rect(self.DISPLAY, (255, 255, 0), P_RECT_DEBUG, width=1)
 
                 if x_collision and y_collision:
                     # Collision on both X and Y axes
