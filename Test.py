@@ -90,20 +90,30 @@ class Platformer:
             if event.type == pygame.QUIT:
                 self.RUN = False
         
+        # Scrolling X Axis
+        if Player.POS_X < 350:
+            self.SCROLL[0] = 0
+        elif Player.POS_X >= 1100:
+            self.SCROLL[0] = 750
 
-        self.SCROLL[0] += (self.PLAYER.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
+        else:
+            self.SCROLL[0] += (self.PLAYER.POS_X - self.SCROLL[0] -  self.GAME_PADDING)
+
+        #Scrolling On Y Axis
         if (self.PLAYER.POS_Y <= 175):
             self.SCROLL[1] = 0
+        elif (self.PLAYER.POS_Y >= 550):
+            self.SCROLL[1] = 375
         else:
             self.SCROLL[1] += (self.PLAYER.POS_Y - self.SCROLL[1] - 175)
         self.draw()
-    
+
+        #print("Player POS_X ==> {} self.SCROLL[0] {}".format(self.PLAYER.POS_X, self.SCROLL[0]))
     def draw(self):
 
-        if Player.POS_X < 350:
-            self.DISPLAY.blit(self.BG_IMG, ( 0, 0))
-        else:
-            self.DISPLAY.blit(self.BG_IMG, (-self.SCROLL[0], 0))
+        self.DISPLAY.blit(self.BG_IMG, (0 - self.SCROLL[0], 0 - self.SCROLL[1]))
+
+
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
@@ -129,13 +139,7 @@ class Platformer:
 
         
         self.PLAYER.Update(self)
-        '''
-        if self.PLAYER.PLAYER_RECT.x < 350:
-            pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.PLAYER.PLAYER_RECT, width=1)
-        else:
-            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (self.PLAYER.PLAYER_RECT.x - self.SCROLL[0], self.PLAYER.PLAYER_RECT.y, self.PLAYER.PLAYER_RECT.width, self.PLAYER.PLAYER_RECT.height), width=1)
-        '''
-        #
+
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
     
 
@@ -152,8 +156,8 @@ class Platformer:
            self.SHOW = False
        
        if KEY[pygame.K_3]:
-           self.PLAYER.POS_X = 80
-           self.PLAYER.POS_Y = 280
+           self.PLAYER.POS_X = 60
+           self.PLAYER.POS_Y = 580
 
 class Player:
     def __init__(self, display):
@@ -221,7 +225,7 @@ class Player:
                     self.FRAME = 0
 
         self.Update_Player()
-        #- self.PLATFORMER.SCROLL[0]
+        
         if self.POS_X < 350:
             self.DISPLAY.blit(pygame.transform.flip(self.PLAYER_IMAGE, self.FLIPPED, False), (self.POS_X , self.POS_Y - self.PLATFORMER.SCROLL[1]))
         else:
@@ -288,11 +292,11 @@ class Player:
         if self.MOVING_LEFT == True and self.PLAYER_RECT.x >= -5:
             self.ACTION = 1
             self.FLIPPED = True
-            self.DELTA_X -= 0.2
+            self.DELTA_X -= 0.5
 
         if self.MOVING_RIGHT == True and self.POS_X < 1500 :
             self.ACTION = 1
-            self.DELTA_X += 0.2
+            self.DELTA_X += 0.5
             self.FLIPPED = False
 
         if self.JUMPED == True:
@@ -315,39 +319,51 @@ class Player:
 
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y 
-        print(self.DELTA_Y)
+        
 
     #TODO: Wrap this in a function that doesn't use a nested loop -- A little inefficient
     def Check_Tile_Collision(self, Data):
+        P_RECT_1 = pygame.Rect((self.PLAYER_RECT.x + self.DELTA_X) - self.PLATFORMER.SCROLL[0], (self.PLAYER_RECT.y + self.DELTA_Y) - self.PLATFORMER.SCROLL[1], self.PLAYER_RECT.width, self.PLAYER_RECT.height)
         
         for ROW in range(len(Data)):
             for CELL in range(len(Data[ROW])):
                 SPRITE_IDX = Data[ROW][CELL]
                 if SPRITE_IDX == 6:
                     SPRITE_RECT = pygame.Rect(CELL * self.PLATFORMER.SPRITE_WIDTH, ROW * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
-                    #pygame.draw.rect(P1.DISPLAY, (255, 255, 255), SPRITE_RECT, width=1)
                     
-                    
-                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X , self.PLAYER_RECT.y, self.PLAYER_WIDTH // 2, self.PLAYER_HEIGHT // 2) :
-                        self.DELTA_X = 0
-                        #print("X Axis Collision")
-           
-                    if SPRITE_RECT.colliderect(self.PLAYER_RECT.x, self.PLAYER_RECT.y + self.DELTA_Y, 20, self.PLAYER_RECT.height):
-                      #  print("CHECK ==> {} SRPITE_BOTTOM ==> {} PLAYER_RECT_TOP ==> {}".format((SPRITE_RECT.bottom - self.PLAYER_RECT.top), SPRITE_RECT.bottom, self.PLAYER_RECT.top))
-                        
-                        #CEILING
-                        if  self.VEL_Y < 0:
-                            self.DELTA_Y = (SPRITE_RECT.bottom - self.PLAYER_RECT.top)
-                            self.VEL_Y = 0
-                                
-                            #print("CEILING COLLISION -- || -- DELTA_Y ==> {}".format(self.DELTA_Y))
-                        #FLOOR
-                        elif (SPRITE_RECT.top - self.PLAYER_RECT.bottom) == -1:
-                            self.DELTA_Y = 0
-                            self.VEL_Y = 0
+                x_collision = False
+                y_collision = False
 
-#                            print("DELTA_Y -->{}  CHECK ==> {} SRPITE_BOTTOM ==> {} PLAYER_RECT_TOP ==> {}".format(self.DELTA_Y, (SPRITE_RECT.top - self.PLAYER_RECT.bottom), SPRITE_RECT.top, self.PLAYER_RECT.bottom))
+                if SPRITE_RECT.colliderect(self.PLAYER_RECT.x + self.DELTA_X, self.PLAYER_RECT.y, self.PLAYER_RECT.width, self.PLAYER_RECT.height - 1):
+                    x_collision = True
 
+                if SPRITE_RECT.colliderect(self.PLAYER_RECT.x, self.PLAYER_RECT.y + self.DELTA_Y, self.PLAYER_RECT.width - 2, self.PLAYER_RECT.height):
+                    y_collision = True
+
+                if x_collision and y_collision:
+                    # Collision on both X and Y axes
+                    # Handle the collision here
+                    # You can choose to adjust the player's position or apply different behavior
+
+                    # Example: Adjust the player's position to the previous valid position
+                    self.PLAYER_RECT.x -= self.DELTA_X
+                    self.PLAYER_RECT.y -= self.DELTA_Y
+
+                    # Reset the player's movement
+                    self.DELTA_X = 0
+                    self.DELTA_Y = 0
+                    self.VEL_Y = 0
+
+                elif x_collision:
+                    # Collision on the X-axis only
+                    self.PLAYER_RECT.x -= self.DELTA_X
+                    self.DELTA_X = 0
+
+                elif y_collision:
+                    # Collision on the Y-axis only
+                    self.PLAYER_RECT.y -= self.DELTA_Y
+                    self.DELTA_Y = 0
+                    self.VEL_Y = 0
 
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
