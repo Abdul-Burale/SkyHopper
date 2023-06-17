@@ -28,7 +28,7 @@ class Platformer:
         self.SPRITE_HEIGHT = 32
         self.BLOCK_WIDTH = 40
         self.BLOCK_HEIGHT = 40
-        self.NUM_ROWS = 4
+        self.NUM_ROWS = 5
         self.NUM_COLOUMS = 15
         self.GAME_MAP = self.LOAD_MAP('Asset/TestMap')
 
@@ -40,7 +40,7 @@ class Platformer:
 
         #Game Assets
         self.BG_IMG = pygame.transform.scale(pygame.image.load("Asset/Background.png"), (self.WINDOW_WIDTH, self.WINDOW_HEIGHT)) 
-        self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet.png").convert_alpha()
+        self.SPRITE_SHEET_IMG = pygame.image.load("Asset/SpriteSheet2.png").convert_alpha()
         self.SPRITE_LIST = self.CREATE_SPRITE_LIST()
 
         self.GAME_PADDING = 352
@@ -56,8 +56,12 @@ class Platformer:
         data = data.split('\n')
         Game_Map = []
         for row in data:
-            Converted_Row = [int(char) for char in row]
-            Game_Map.append(Converted_Row)
+            Converted_Row = []
+            for num_str in row.split(','):
+                if num_str.isdigit():
+                    Converted_Row.append(int(num_str))
+            if Converted_Row:
+                Game_Map.append(Converted_Row)
         return Game_Map
 
     def CREATE_SPRITE_LIST(self):
@@ -79,10 +83,15 @@ class Platformer:
     
         return LIST
     
-    def HANDLE_SPRITE_IMAGE(self, S_IDX):
+    #TODO: Havnn't impleted this because I still want to avoid writing a huge switch statement
+    def HANDLE_SPRITE_IMAGE(self, S_IDX, ROW, CELL):
+        if 0 <= S_IDX < len(self.SPRITE_LIST):
+
+            SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[S_IDX]
+            SPRITE_RECT.x = (CELL * SPRITE_RECT.width)
+            SPRITE_RECT.y = (ROW * SPRITE_RECT.height)
         pass
     
-    #TODO: Take this player argument and wrap it in a functiont aht sets all arguments passed from other classess.
     def update(self, player):
         self.PLAYER = player
         pygame.display.update()
@@ -123,39 +132,25 @@ class Platformer:
                 SPRITE_IDX = self.GAME_MAP[row][col]
                 #TODO: Create a function that deals wiuth this
                 
-                if SPRITE_IDX == 6:
-                 
-                    if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
-                        SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                        SPRITE_RECT.x = (col * SPRITE_RECT.width)
-                        SPRITE_RECT.y = (row * SPRITE_RECT.height)
-                        
-                        
-                        if Player.POS_X < 350:
-                        # Camera stops moving as player is near the Wall
-                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
-                            if self.SHOW == True:
-                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
-                        else:
-                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
-                            if self.SHOW == True:
-                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
-
-                if SPRITE_IDX == 1:
-                                    
-                                        SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
-                                        SPRITE_RECT.x = (col * SPRITE_RECT.width)
-                                        SPRITE_RECT.y = (row * SPRITE_RECT.height)
-                                        if Player.POS_X < 350:
-                                        # Camera stops moving as player is near the Wall
-                                            self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
-                                            if self.SHOW == True:
-                                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
-                                        else:
-                                            self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
-                                            if self.SHOW == True:
-                                                pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
-
+                if SPRITE_IDX == 0:
+                    continue
+            
+             
+                if 0 <= SPRITE_IDX < len(self.SPRITE_LIST):
+                    SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
+                    SPRITE_RECT.x = (col * SPRITE_RECT.width)
+                    SPRITE_RECT.y = (row * SPRITE_RECT.height)
+                    
+                    
+                    if Player.POS_X < 350:
+                    # Camera stops moving as player is near the Wall
+                        self.DISPLAY.blit(SPRITE_SURFACE, (SPRITE_RECT.x, (SPRITE_RECT.y - self.SCROLL[1])))
+                        if self.SHOW == True:
+                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x, SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
+                    else:
+                        self.DISPLAY.blit(SPRITE_SURFACE, ((SPRITE_RECT.x  - self.SCROLL[0]) , (SPRITE_RECT.y - self.SCROLL[1])))
+                        if self.SHOW == True:
+                            pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
         
         self.PLAYER.Update(self)
 
@@ -175,15 +170,27 @@ class Platformer:
            self.SHOW = False
        
        if KEY[pygame.K_3]:
-           self.PLAYER.POS_X = 60
-           self.PLAYER.POS_Y = 580
+           self.PLAYER.POS_X = 70
+           self.PLAYER.POS_Y = 70
+  
+       if KEY[pygame.K_4]:
+           self.PLAYER.POS_X = 1110
+           self.PLAYER.POS_Y = 70 
+       
+       if KEY[pygame.K_5]:
+           self.PLAYER.POS_X =60
+           self.PLAYER.POS_Y = 550
+       
+       if KEY[pygame.K_6]:
+           self.PLAYER.POS_X = 1090
+           self.PLAYER.POS_Y = 450
 
 class Player:
     def __init__(self, display):
         #Player
         self.DISPLAY = display
-        self.POS_X = 80
-        self.POS_Y = 280
+        self.POS_X = 60
+        self.POS_Y = 70
         self.ACTION = 0
         self.FRAME = 0
         self.PLAYER_WIDTH = 50
@@ -208,7 +215,6 @@ class Player:
         self.MOVING_RIGHT = False
         self.MOVING_LEFT = False
         self.FLIPPED = False
-        self.Can_Jump = 0
 
         # Player time  (TODO): Wrapping this globally might be bad so sort time in Platform class later
         self.LAST_UPDATE = pygame.time.get_ticks()
@@ -281,7 +287,7 @@ class Player:
 
         # Python won't let me handle jump with two different methods
         if KEY[pygame.K_SPACE] and not self.JUMPED:
-            self.VEL_Y = -0.60
+            self.VEL_Y = -0.85
             self.JUMPED = True
             
 
@@ -313,18 +319,18 @@ class Player:
         if self.MOVING_LEFT == True and self.PLAYER_RECT.x >= -5:
             self.ACTION = 1
             self.FLIPPED = True
-            self.DELTA_X -= 0.5
+            self.DELTA_X -= 0.55
 
         if self.MOVING_RIGHT == True and self.POS_X < 1500 :
             self.ACTION = 1
-            self.DELTA_X += 0.5
+            self.DELTA_X += 0.55
             self.FLIPPED = False
 
         #Apply Gravity
         if self.FALLING == True:
             self.VEL_Y += self.GRAVITY
-            if self.VEL_Y >= 0.5:
-                self.VEL_Y = 0.45
+            if self.VEL_Y >= 0.9:
+                self.VEL_Y = 0.85
 
         self.DELTA_Y += self.VEL_Y
 
@@ -334,7 +340,6 @@ class Player:
 
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y 
-        print("VEL_Y ==> {}".format(self.VEL_Y))
         
 
     #TODO: Wrap this in a function that doesn't use a nested loop -- A little inefficient
@@ -344,9 +349,17 @@ class Player:
         for ROW in range(len(Data)):
             for CELL in range(len(Data[ROW])):
                 SPRITE_IDX = Data[ROW][CELL]
-                if SPRITE_IDX == 6:
-                    SPRITE_RECT = pygame.Rect(CELL * self.PLATFORMER.SPRITE_WIDTH, ROW * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
-                    
+                if SPRITE_IDX == 0:
+                    continue
+
+                if 30 <= SPRITE_IDX <= 75:
+                    continue
+
+
+
+                
+                SPRITE_RECT = pygame.Rect(CELL * self.PLATFORMER.SPRITE_WIDTH, ROW * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
+                
                 x_collision = False
                 y_collision = False
 
@@ -395,7 +408,3 @@ while P1.RUN:
     P1.update(Player)
     P1.draw()
     Player.Update(P1)
-
-
-    
-
