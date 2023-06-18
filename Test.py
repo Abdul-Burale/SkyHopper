@@ -198,7 +198,8 @@ class Player:
         self.ACTION_LIST = []
         self.ACTION_ANI("Asset/idle/man_{}.png", 4)
         self.ACTION_ANI("Asset/run/man_{}.png",6)
-
+        self.HEALTH = 100
+        self.HEALTH_RECT = pygame.Rect(self.POS_X, self.POS_Y, 35, 5)
 
         #Deal with player state animations. (TODO: As gamne gets more complicated come back to update thsi()
         self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
@@ -233,6 +234,8 @@ class Player:
         #TODO: TIDY UP
         self.PLATFORMER = platformer
         self.PLAYER_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]  
+        pygame.draw.rect(self.DISPLAY, (0, 255, 0), self.HEALTH_RECT)
+
 
 
         # Calculate time in miliseconds
@@ -298,7 +301,10 @@ class Player:
                 self.JUMPED = False
         
         #TODO: MOVE EXCAPE KEY INTO HERE
-            
+        if KEY[pygame.K_v]:
+            self.HEALTH -= 1
+            if (self.HEALTH <= 0):
+                self.HEALTH = 100
 
         if not KEY[pygame.K_a] and not KEY[pygame.K_d]:
             self.ACTION = 0
@@ -310,7 +316,6 @@ class Player:
 
     def Handle_Movement(self):
         # Reset Delta values
-
         self.DELTA_X = 0
         self.DELTA_Y = 0
 
@@ -321,7 +326,7 @@ class Player:
             self.FLIPPED = True
             self.DELTA_X -= 0.55
 
-        if self.MOVING_RIGHT == True and self.POS_X < 1500 :
+        if self.MOVING_RIGHT == True and self.POS_X < 1477 :
             self.ACTION = 1
             self.DELTA_X += 0.55
             self.FLIPPED = False
@@ -340,6 +345,11 @@ class Player:
 
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y 
+        
+        #Updating Health Rect Position Etc
+        self.HEALTH_RECT.x = self.POS_X - self.PLATFORMER.SCROLL[0]
+        self.HEALTH_RECT.y = (self.POS_Y - 10) - self.PLATFORMER.SCROLL[1]
+        self.HEALTH_RECT.width = self.HEALTH // 3
         
 
     #TODO: Wrap this in a function that doesn't use a nested loop -- A little inefficient
@@ -368,6 +378,8 @@ class Player:
                     x_collision = True
                     if self.PLATFORMER.SHOW == True:
                         pygame.draw.rect(self.DISPLAY, (255, 0, 0), P_RECT_DEBUG, width=1)
+                        pygame.draw.rect(self.DISPLAY, (0, 255, 0), self.HEALTH_RECT)
+
 
 
                 #Y - AXIS COLLISION
