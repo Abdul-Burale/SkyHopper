@@ -46,6 +46,9 @@ class Platformer:
         self.GAME_PADDING = 352
         self.SCROLL = [0 , 0]
         self.SHOW = False
+        self.TILE_LIST = []
+
+        self.CollideList = []
 
     def LOAD_MAP(self, path):
         f = open(path + '.txt', 'r')
@@ -119,13 +122,13 @@ class Platformer:
         else:
             self.SCROLL[1] += (self.PLAYER.POS_Y - self.SCROLL[1] - 175)
         self.draw()
-
+        
         #print("Player POS_X ==> {} self.SCROLL[0] {}".format(self.PLAYER.POS_X, self.SCROLL[0]))
     def draw(self):
 
         self.DISPLAY.blit(self.BG_IMG, (0 - self.SCROLL[0], 0 - self.SCROLL[1]))
 
-
+        
 
         for row in range(len(self.GAME_MAP)):
             for col in range(len(self.GAME_MAP[row])):
@@ -140,6 +143,8 @@ class Platformer:
                     SPRITE_SURFACE, SPRITE_RECT = self.SPRITE_LIST[SPRITE_IDX]
                     SPRITE_RECT.x = (col * SPRITE_RECT.width)
                     SPRITE_RECT.y = (row * SPRITE_RECT.height)
+                    self.TILE_LIST.append(SPRITE_RECT)
+
                     
                     
                     if Player.POS_X < 350:
@@ -152,9 +157,12 @@ class Platformer:
                         if self.SHOW == True:
                             pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
         
-        self.PLAYER.Update(self)
+        for I in Entity_List:
+            I.Update()
 
+        self.PLAYER.Update(self)
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
+
     
 
     def Handle_Input(self):
@@ -168,7 +176,10 @@ class Platformer:
         
        if KEY[pygame.K_2]:
            self.SHOW = False
-       
+           E1.ACTION = 1
+           if E1.ACTION >= 4:
+               E1.ACTION = 0
+           
        if KEY[pygame.K_3]:
            self.PLAYER.POS_X = 70
            self.PLAYER.POS_Y = 70
@@ -370,6 +381,7 @@ class Player:
                 
                 SPRITE_RECT = pygame.Rect(CELL * self.PLATFORMER.SPRITE_WIDTH, ROW * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
                 
+
                 x_collision = False
                 y_collision = False
 
@@ -413,10 +425,111 @@ class Player:
                     self.DELTA_Y = 0
                     self.VEL_Y = 0
 
+
+
+
+class Entity:
+    def __init__(self, Pos_X, Pos_Y):
+        self.POZ_X = Pos_X
+        self.POZ_Y = Pos_Y
+        self.HEALTH = 100
+        self.ACTION = 0
+        self.FRAME = 0
+        self.E_WIDTH = 50
+        self.E_HEIGHT = 50
+        self.GRAVITY = 0.005
+        self.VEL_Y = 0
+        self.DELTA_X = 0
+        self.DELTA_Y = 0
+
+        self.ACTION_LIST = []
+        self.ACTION_ANI("Asset/E/idle/e_{}.png", 4)
+        self.ACTION_ANI("Asset/E/walk/e_{}.png", 7)
+        self.ACTION_ANI("Asset/E/attack/e_{}.png", 6)
+        self.ACTION_ANI("Asset/E/death/e_{}.png", 5)
+        
+        self.E_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
+        self.E_RECT = pygame.Rect(self.POZ_X, self.POZ_Y, self.E_WIDTH // 2, self.E_HEIGHT // 1.5)
+        self.HEALTH_RECT = pygame.Rect(self.POZ_X, self.POZ_Y, 35, 5)
+
+        self.LAST_UPDATE = pygame.time.get_ticks()
+
+        #PLATFORMER
+        self.PLATFORMER = P1
+        self.DISPLAY = self.PLATFORMER.DISPLAY
+
+    
+    def ACTION_ANI(self, PATH, RANGE):
+        Temp_List = []
+        for i in range(RANGE):
+            Image_Path = PATH.format(i)
+            Action_Image = pygame.image.load(Image_Path).convert()
+            Action_Image.set_colorkey((255, 255, 255))
+            Temp_List.append(Action_Image)
+        
+        self.ACTION_LIST.append(Temp_List)
+    
+    def Update(self):
+        
+        self.E_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
+        
+        CURRENT_TIME = pygame.time.get_ticks()
+        TIME_ELAPSED = CURRENT_TIME - self.LAST_UPDATE
+
+        #APPLY A Const Gravity to Entity]
+        self.VEL_Y += self.GRAVITY
+        if self.VEL_Y >= 0.9:
+            self.VEL_Y = 0.85
+
+        if TIME_ELAPSED >= 150:
+            self.FRAME += 1
+            self.LAST_UPDATE = CURRENT_TIME
+        
+            #TODO: Figure how I Handle Actions
+            if self.ACTION == 0:
+                if self.FRAME >= 4:
+                    self.FRAME = 0
+            
+            if self.ACTION == 1:
+                if self.FRAME >= 7:
+                    self.FRAME = 0
+                    
+
+            if self.ACTION == 2:
+                if self.FRAME >= 6:
+                    self.FRAME = 0
+            
+            if self.ACTION == 3:
+                if self.FRAME >= 5:
+                    self.FRAME = 4
+        
+        self.DELTA_Y += self.VEL_Y
+
+        self.Check_Tile_Collision(P1.GAME_MAP)
+
+        self.POZ_Y += self.DELTA_Y
+
+        self.E_RECT.x = self.POZ_X
+        self.E_RECT.y = self.POZ_Y
+
+
+
+        self.DISPLAY.blit(self.E_IMAGE, (self.POZ_X - self.PLATFORMER.SCROLL[0],self.POZ_Y - self.PLATFORMER.SCROLL[1]))
+
+    def Check_Tile_Collision(self, Data):
+        pass            
+Entity_List = []
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
+E1 = Entity(110, 110)
+
+Entity_List.append(E1)
+
+
 
 while P1.RUN:
     P1.update(Player)
     P1.draw()
-    Player.Update(P1)
+    E1.Update()
+
+   
