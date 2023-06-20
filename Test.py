@@ -157,12 +157,16 @@ class Platformer:
                         if self.SHOW == True:
                             pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
         
-        for I in Entity_List:
-            I.Update()
+        #for I in Entity_List:
+        #    I.Update()
+        E1.Update()
 
         self.PLAYER.Update(self)
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
 
+    # Render text to screen
+    def DrawMessage(self, Sentence, X, Y, font_type, display):
+        pass
     
 
     def Handle_Input(self):
@@ -189,7 +193,7 @@ class Platformer:
            self.PLAYER.POS_Y = 70 
        
        if KEY[pygame.K_5]:
-           self.PLAYER.POS_X =60
+           self.PLAYER.POS_X = 60
            self.PLAYER.POS_Y = 550
        
        if KEY[pygame.K_6]:
@@ -219,11 +223,11 @@ class Player:
         self.DELTA_X = 0
         self.DELTA_Y = 0
         self.VEL_Y = 0
-        self.GRAVITY = 0.005
+        self.GRAVITY = 0.007
 
         # Direction (TODO: Will have to change this when dealing with velocity direction)
-        self.JUMPED = False;
-        self.FALLING = False;
+        self.JUMPED = False
+        self.FALLING = False
         self.MOVING_RIGHT = False
         self.MOVING_LEFT = False
         self.FLIPPED = False
@@ -335,11 +339,11 @@ class Player:
         if self.MOVING_LEFT == True and self.PLAYER_RECT.x >= -5:
             self.ACTION = 1
             self.FLIPPED = True
-            self.DELTA_X -= 0.55
+            self.DELTA_X -= 0.75
 
         if self.MOVING_RIGHT == True and self.POS_X < 1477 :
             self.ACTION = 1
-            self.DELTA_X += 0.55
+            self.DELTA_X += 0.75
             self.FLIPPED = False
 
         #Apply Gravity
@@ -353,7 +357,7 @@ class Player:
         
         self.Check_Tile_Collision(self.PLATFORMER.GAME_MAP)
 
-
+        
         self.POS_X += self.DELTA_X
         self.POS_Y += self.DELTA_Y 
         
@@ -441,6 +445,7 @@ class Entity:
         self.VEL_Y = 0
         self.DELTA_X = 0
         self.DELTA_Y = 0
+        self.Direction = 0.5
 
         self.ACTION_LIST = []
         self.ACTION_ANI("Asset/E/idle/e_{}.png", 4)
@@ -458,6 +463,13 @@ class Entity:
         self.PLATFORMER = P1
         self.DISPLAY = self.PLATFORMER.DISPLAY
 
+    def Auto(self):
+        self.ACTION = 1
+        self.DELTA_X = self.Direction
+        #print("Last_POS ==> {} Current_Pos ==> {} Math ==> {}".format(Last_Pos, self.POZ_X, Direction))
+        if self.POZ_X >= 1470:
+            self.Direction = -0.5     
+
     
     def ACTION_ANI(self, PATH, RANGE):
         Temp_List = []
@@ -471,10 +483,14 @@ class Entity:
     
     def Update(self):
         
+        self.E_RECT.x = self.POZ_X
+        self.E_RECT.y = self.POZ_Y
+        
         self.E_IMAGE = self.ACTION_LIST[self.ACTION][self.FRAME]
         
         CURRENT_TIME = pygame.time.get_ticks()
         TIME_ELAPSED = CURRENT_TIME - self.LAST_UPDATE
+
 
         #APPLY A Const Gravity to Entity]
         self.VEL_Y += self.GRAVITY
@@ -493,31 +509,73 @@ class Entity:
             if self.ACTION == 1:
                 if self.FRAME >= 7:
                     self.FRAME = 0
-                    
+                    self.E_RECT.x += 10
+
 
             if self.ACTION == 2:
                 if self.FRAME >= 6:
                     self.FRAME = 0
-            
+
             if self.ACTION == 3:
                 if self.FRAME >= 5:
                     self.FRAME = 4
         
         self.DELTA_Y += self.VEL_Y
+        self.Auto()
 
         self.Check_Tile_Collision(P1.GAME_MAP)
-
+        self.POZ_X += self.DELTA_X
         self.POZ_Y += self.DELTA_Y
+        pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.E_RECT, width=1)
 
-        self.E_RECT.x = self.POZ_X
-        self.E_RECT.y = self.POZ_Y
-
+        # Do the Enemie Movement Loop here
 
 
         self.DISPLAY.blit(self.E_IMAGE, (self.POZ_X - self.PLATFORMER.SCROLL[0],self.POZ_Y - self.PLATFORMER.SCROLL[1]))
 
     def Check_Tile_Collision(self, Data):
-        pass            
+        for Row in range(len(Data)):
+            for Cell in range(len(Data[Row])):
+                Tile_IDX = Data[Row][Cell]
+
+                if Tile_IDX == 0:
+                    continue
+
+                if 30 <= Tile_IDX <= 75:
+                    continue
+
+                
+                # Recalculating the X and Y of the Tiles is inefficient
+                Tile_Rect = pygame.Rect(Cell * self.PLATFORMER.SPRITE_WIDTH, Row * self.PLATFORMER.SPRITE_HEIGHT, self.PLATFORMER.SPRITE_WIDTH, self.PLATFORMER.SPRITE_HEIGHT)
+
+                #Collision Flags
+                X_Collision = False
+                Y_Collision = False
+
+                if Tile_Rect.colliderect(self.E_RECT.x + self.DELTA_X, self.E_RECT.y, self.E_RECT.width, self.E_RECT.height - 1):
+                    X_Collision = True
+
+                
+                if Tile_Rect.colliderect(self.E_RECT.x , self.E_RECT.y + self.DELTA_Y, self.E_RECT.width - 2, self.E_RECT.height):
+                    Y_Collision = True
+
+                if X_Collision and Y_Collision:
+                    self.E_RECT.x -= self.DELTA_X
+                    self.E_RECT.y -= self.DELTA_Y
+
+                    self.DELTA_X = 0
+                    self.DELTA_Y = 0
+                    self.VEL_Y = 0
+
+                elif X_Collision:
+                    self.E_RECT.x -= self.DELTA_X
+                    self.DELTA_X = 0
+
+                elif Y_Collision:
+                    self.E_RECT.y -= self.DELTA_Y
+                    self.DELTA_Y = 0
+                    self.VEL_Y = 0 
+         
 Entity_List = []
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
@@ -530,6 +588,5 @@ Entity_List.append(E1)
 while P1.RUN:
     P1.update(Player)
     P1.draw()
-    E1.Update()
 
    
