@@ -157,10 +157,9 @@ class Platformer:
                         if self.SHOW == True:
                             pygame.draw.rect(self.DISPLAY, (255, 255, 255), (SPRITE_RECT.x - self.SCROLL[0], SPRITE_RECT.y - self.SCROLL[1], 50 / 1.5, 50 / 1.5), width=1)
         
-        #for I in Entity_List:
-        #    I.Update()
-        E1.Update()
-
+        for I in Entity_List:
+           I.Update()
+        
         self.PLAYER.Update(self)
         self.WINDOW.blit(pygame.transform.scale(self.DISPLAY, (self.WINDOW_WIDTH, self.WINDOW_HEIGHT )), (0, 0))
 
@@ -446,6 +445,9 @@ class Entity:
         self.DELTA_X = 0
         self.DELTA_Y = 0
         self.Direction = 0.5
+        
+        #Flags
+        self.Flipped = False
 
         self.ACTION_LIST = []
         self.ACTION_ANI("Asset/E/idle/e_{}.png", 4)
@@ -466,7 +468,7 @@ class Entity:
     def Auto(self):
         self.ACTION = 1
         self.DELTA_X = self.Direction
-        #print("Last_POS ==> {} Current_Pos ==> {} Math ==> {}".format(Last_Pos, self.POZ_X, Direction))
+
         if self.POZ_X >= 1470:
             self.Direction = -0.5     
 
@@ -526,7 +528,7 @@ class Entity:
         self.Check_Tile_Collision(P1.GAME_MAP)
         self.POZ_X += self.DELTA_X
         self.POZ_Y += self.DELTA_Y
-        pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.E_RECT, width=1)
+        #pygame.draw.rect(self.DISPLAY, (255, 255, 255), self.E_RECT, width=1)
 
         # Do the Enemie Movement Loop here
 
@@ -580,8 +582,12 @@ Entity_List = []
 P1 = Platformer()
 Player = Player(P1.DISPLAY)
 E1 = Entity(110, 110)
+E2 = Entity(160, 110)
+E3 = Entity(200, 110)
 
-Entity_List.append(E1)
+#Entity_List.append(E1)
+#Entity_List.append(E2)
+#Entity_List.append(E3)
 
 
 
